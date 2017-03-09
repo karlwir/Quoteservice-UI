@@ -121,8 +121,8 @@
                             location = request.getResponseHeader("Location");
                             $.getJSON(location, function(authorData) {
                                 self.authors.push(new Author(authorData));
-//                                self.newAuthorFirstname("");
-//                                self.newAuthorLastname("");
+                                self.newAuthorFirstname("");
+                                self.newAuthorLastname("");
                             });
                         }
                     });
@@ -148,8 +148,8 @@
                             location = request.getResponseHeader("Location");
                             $.getJSON(location, function(quoteData) {
                                 self.quotes.push(new Quote(quoteData));
-//                                self.newQuoteAuthor("");
-//                                self.newQuoteContent("");
+                                self.newQuoteAuthor("");
+                                self.newQuoteContent("");
                             });
                         }
                     });
@@ -160,8 +160,6 @@
                         data: ko.toJSON(quote),
                         type: "delete", contentType: "application/json",
                         success: function(result) {
-                            console.log("delete");
-                            console.log(quote);
                             self.quotes.remove(quote);
                         }
                     });
