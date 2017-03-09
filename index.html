@@ -1,0 +1,150 @@
+<html>
+  <head>
+    <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.1/knockout-min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+          <div class="col-md-6">
+            <h3>Create qoute</h3>
+            <form id="form2" action="http://localhost:8080/quotes" method="post" name="myform" onsubmit="submitForm(event, this)">
+              <div class="form-group">
+                <label for="inputqcontent">Quote</label>
+                <input type="text" class="form-control" id="inputFirstname" name="content" aria-describedby="firstname" placeholder="Enter quote">
+              </div>
+              <div class="form-group">
+              <label for="exampleSelect1">Author</label>
+              <select class="form-control" id="authorSelect" name="author">
+              </select>
+            </div>
+              <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+          </div>
+          <div class="col-md-6">
+            <h3>Create author</h3>
+              <form id="form" action="http://localhost:8080/authors" method="post" name="myform" onsubmit="submitForm(event, this)">
+                <div class="form-group">
+                  <label for="inputFirstname">Firstname</label>
+                  <input type="text" class="form-control" id="inputFirstname" name="firstname" aria-describedby="firstname" placeholder="Enter firstname">
+                </div>
+                <div class="form-group">
+                  <label for="inputLastname">Lastname</label>
+                  <input type="text" class="form-control" id="inputLastname" name="lastname" aria-describedby="lastname" placeholder="Enter lastname">
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+              </form>
+            </div>
+          <div class="col-md-6">
+            <h3>Quotes</h3>
+            <ul class="list-group" id="quotesList">
+            </ul>
+          </div>
+        </div>
+        </div>
+    </div>
+    <script>
+
+    var jsonQuotes = [];
+
+    var submitForm = function (e, f) {
+      // stop the regular form submission
+      e.preventDefault();
+      // collect the form data while iterating over the inputs
+      var data = {};
+      for (var i = 0; i < f.length; ++i) {
+        var input = f[i];
+        if (input.name) {
+          data[input.name] = input.value;
+        }
+        if(input.name === "author") {
+          data[input.name] = $.parseJSON(input.value);
+        }
+        input.value = null;
+      }
+
+
+      // construct an HTTP request
+      var xhr = new XMLHttpRequest();
+      xhr.open(f.method, f.action, true);
+      xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+
+      // send the collected data as JSON
+      xhr.send(JSON.stringify(data));
+
+      xhr.onloadend = function () {
+        getAuthors();
+        getQuotes(0);
+      };
+    };
+
+
+
+    function getAuthors() {
+      var xhr = new XMLHttpRequest();
+      xhr.open("get", "http://localhost:8080/authors", true);
+      xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+
+      // send the collected data as JSON
+      xhr.send();
+
+      xhr.onloadend = function () {
+        pupulateAuthors(JSON.parse(this.responseText));
+      };
+    }
+
+    function pupulateAuthors(jsonAuthors) {
+      var listItems = '<option selected="selected" value="0">- Select -</option>';
+
+      for (var i = 0; i < jsonAuthors.length; i++) {
+          listItems += "<option value=" + JSON.stringify(jsonAuthors[i]) + ">" + jsonAuthors[i].firstname + " " + jsonAuthors[i].lastname + "</option>";
+      }
+
+      $("#authorSelect").html(listItems);
+    }
+    function getQuotes(page) {
+      var xhr = new XMLHttpRequest();
+      xhr.open("get", "http://localhost:8080/quotes?page=" + page, true);
+      xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+
+      // send the collected data as JSON
+      xhr.send();
+
+      xhr.onloadend = function () {
+        jsonQuotes = JSON.parse(this.responseText);
+        pupulateQuotes(JSON.parse(this.responseText));
+      };
+    }
+
+    function pupulateQuotes(jsonQuotes) {
+      $("#quotesList").html("<small>No quotes added...</small>");
+      var listItems = "";
+
+      for (var i = 0; i < jsonQuotes.length; i++) {
+          listItems += '<a class="list-group-item list-group-item-action" onclick="removeQuote(' + i + ')"><p>' + jsonQuotes[i].content + "</p><small>" + jsonQuotes[i].author.firstname + " " + jsonQuotes[i].author.lastname + "</small></a>";
+      }
+      if(jsonQuotes.length > 0) {
+        $("#quotesList").html(listItems);
+      }
+    }
+
+    function removeQuote(i) {
+      var xhr = new XMLHttpRequest();
+      xhr.open("delete", "http://localhost:8080/quotes", true);
+      xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+      xhr.send(JSON.stringify(jsonQuotes[i]));
+
+      xhr.onloadend = function () {
+        getQuotes(0);
+      };
+    }
+
+    $(document).ready(function () {
+      getQuotes(0);
+      getAuthors();
+    });
+ </script>
+  </body>
+</html>
