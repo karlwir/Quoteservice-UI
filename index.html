@@ -25,7 +25,7 @@
                 position: absolute;
                 width: 100%;
                 top: 50vh;
-                transform: translateY(-50%);
+                transform: translateY(-60%);
             }
             
             .text-sm {
@@ -35,40 +35,11 @@
     </head>
     <body>
         <div class="jumbotron">
-      <div class="container">
-        <h1 class="display-3">The Quoteservice</h1>
-        <p class="lead">Add your favorite quotes!</p>
-      </div>
-    </div>
-        
-        <!-- ko if: quoteUpdateCopy -->
-        <div class="edit-wrapper">
-            <div class="shader" data-bind="click: function() {quoteUpdateCopy('')}"></div>
-            <div class="edit-block" data-bind="visible: quoteUpdateCopy" style="display:none; ">
-                <div class="container">
-                    <div class="row mt-3 mb-1">
-                        <div class="col-md-6">
-                            <h3>Update qoute</h3>
-                            <form>
-                                <div class="form-group">
-                                    <label>Quote</label>
-                                    <input type="text" class="form-control" placeholder="Enter quote" data-bind="value: quoteUpdateCopy().content">
-                                </div>
-                                <div class="form-group">
-                                    <label>Author</label>
-                                    <select class="form-control" data-bind="options: $root.authors, optionsCaption: 'Choose...', value: quoteUpdateCopy().author, optionsText: 'fullname'" required></select>
-                                </div>
-                                <div class="form-group">
-                                    <button type="submit" class="btn btn-primary" data-bind="click: updateQuote">Save</button>
-                                    <button type="button" class="btn btn-secondary" data-bind="click: function() {quoteUpdateCopy('')}">Cancel</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
+            <div class="container">
+                <h1 class="display-3">The Quoteservice</h1>
+                <p class="lead">Add your favorite quotes!</p>
             </div>
         </div>
-        <!-- /ko -->
         <div class="container mb-5">
             <div class="row">
                 <div class="col-md-6">
@@ -138,21 +109,51 @@
                 </div>
             </div>
         </div>
+        <!-- ko if: quoteUpdateCopy -->
+        <div class="edit-wrapper">
+            <div class="shader" data-bind="click: function() {quoteUpdateCopy('')}"></div>
+            <div class="edit-block" data-bind="visible: quoteUpdateCopy" style="display:none;">
+                <div class="container">
+                    <div class="row mt-3 mb-1">
+                        <div class="col-md-6">
+                            <h3>Update qoute</h3>
+                            <form>
+                                <div class="form-group">
+                                    <label>Quote</label>
+                                    <input type="text" class="form-control" placeholder="Enter quote" data-bind="value: quoteUpdateCopy().content">
+                                </div>
+                                <div class="form-group">
+                                    <label>Author</label>
+                                    <select class="form-control" data-bind="options: $root.authors, optionsText: 'fullname', optionsValue: 'id', value: quoteUpdateCopy().author().id," required></select>
+                                </div>
+                                <div class="form-group">
+                                    <button type="submit" class="btn btn-primary" data-bind="click: updateQuote">Save</button>
+                                    <button type="button" class="btn btn-secondary" data-bind="click: function() {quoteUpdateCopy('')}">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- /ko -->
         <script>
 
             function Quote(data) {
-                this.id = data.id;
-                this.content = ko.observable(data.content);
-                this.author = ko.observable(new Author(data.author));
+                var self = this;
+                self.id = data.id;
+                self.content = ko.observable(data.content);
+                self.author = ko.observable(new Author(data.author));
             }
 
             function Author(data) {
-                this.id = data.id;
-                this.firstname = ko.observable(data.firstname);
-                this.lastname = ko.observable(data.lastname);
-                this.fullname = ko.pureComputed(function() {
-                    return this.firstname() + " " + this.lastname();    
-                }, this);
+                var self = this;
+                self.id = data.id;
+                self.firstname = ko.observable(data.firstname);
+                self.lastname = ko.observable(data.lastname);
+                self.fullname = ko.pureComputed(function() {
+                    return self.firstname() + " " + self.lastname();    
+                }, self);
             }
 
             function QuoteserviceViewModel() {
