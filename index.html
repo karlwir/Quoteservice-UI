@@ -6,6 +6,10 @@
         <script type="text/javascript" src="/lib/knockout-min.js"></script>
     
         <style>
+            .popup-open {
+                overflow: hidden
+            }
+            
             .edit-wrapper {
                 position: fixed;
                 z-index: 100;
@@ -33,7 +37,7 @@
             }
         </style>
     </head>
-    <body>
+    <body data-bind="css: { 'popup-open': quoteUpdateCopy }">
         <div class="jumbotron">
             <div class="container">
                 <h1 class="display-3">The Quoteservice</h1>
@@ -170,9 +174,12 @@
                 
                 self.quoteToUpdate = ko.observable();
                 self.quoteUpdateCopy = ko.observable();
-
-                var QUOTE_HOST = "http://localhost:8080/quotes";
-                var AUTHOR_HOST = "http://localhost:8080/authors";
+//
+//                var QUOTE_HOST = "http://localhost:8080/quotes";
+//                var AUTHOR_HOST = "http://localhost:8080/authors";
+                
+                var QUOTE_HOST = "https://kw-quoteservice-api.herokuapp.com/quotes";
+                var AUTHOR_HOST = "https://kw-quoteservice-api.herokuapp.com/authors";
 
                 $.getJSON(AUTHOR_HOST + "?sort=desc", function(allData) {
                     var mappedAuthors = $.map(allData, function(authorData) { 
