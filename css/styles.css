@@ -1,0 +1,29 @@
+.popup-open {
+    overflow: hidden;
+}
+
+.edit-wrapper {
+    position: fixed;
+    z-index: 100;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
+.shader {
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.edit-block {
+    background-color: #fff; 
+    position: absolute;
+    width: 100%;
+    top: 50vh;
+    transform: translateY(-60%);
+}
+
+.text-sm {
+    font-size:0.875rem;
+}

@@ -2,40 +2,11 @@
     <head>
         <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
         <link rel="stylesheet" href="/lib/bootstrap.min.css"></script>
+        <link rel="stylesheet" href="/css/styles.css"></script>
+        <link rel="stylesheet" href="/lib/awesomplete.css"></script>
         <script type="text/javascript" src="/lib/jquery.min.js"></script>
         <script type="text/javascript" src="/lib/knockout-min.js"></script>
-    
-        <style>
-            .popup-open {
-                overflow: hidden
-            }
-            
-            .edit-wrapper {
-                position: fixed;
-                z-index: 100;
-                top: 0;
-                width: 100vw;
-                height: 100vh;
-            }
-            
-            .shader {
-                width: 100%;
-                height: 100%;
-                background-color: rgba(0,0,0,0.3);
-            }
-            
-            .edit-block {
-                background-color: #fff; 
-                position: absolute;
-                width: 100%;
-                top: 50vh;
-                transform: translateY(-60%);
-            }
-            
-            .text-sm {
-                font-size:0.875rem;
-            }
-        </style>
+        <script type="text/javascript" src="/lib/awesomplete.min.js"></script>
     </head>
     <body data-bind="css: { 'popup-open': quoteUpdateCopy }">
         <div class="jumbotron">
@@ -53,13 +24,22 @@
                             <label>Quote</label>
                             <input type="text" class="form-control" placeholder="Enter quote" data-bind="value: newQuoteContent">
                         </div>
+<!--
                         <div class="form-group">
                             <label>Author</label>
                             <select class="form-control" data-bind="options: $root.authors, optionsCaption: 'Choose...', value: newQuoteAuthor, optionsText: 'fullname'"></select>
                         </div>
+-->
+                        <div class="form-group">
+                                <label>Author</label>
+                                <input class="form-control" type="text" placeholder="Select author" data-bind="awesomplete: $root.authors">
+                        </div>
                         <div class="form-group">
                             <button type="submit" class="btn btn-primary" data-bind="click: saveQuote">Save</button>
-                        </div>
+                        </div>  
+                            <ul id="mylist" data-bind="foreach : authorsComplete">
+                                <li data-bind="text: firstname"></li>
+                            </ul>
                     </form>
                 </div>
                 <div class="col-md-6">
@@ -128,7 +108,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Author</label>
-                                    <select class="form-control" data-bind="options: $root.authors, optionsText: 'fullname', optionsValue: 'id', value: quoteUpdateCopy().author().id," required></select>
+                                    <select class="form-control" data-bind="options: $root.authors, optionsText: 'fullname', value: quoteUpdateCopy().author"></select>
                                 </div>
                                 <div class="form-group">
                                     <button type="submit" class="btn btn-primary" data-bind="click: updateQuote">Save</button>
@@ -140,6 +120,7 @@
                 </div>
             </div>
         </div>
+        
         <!-- /ko -->
         <script>
 
@@ -164,6 +145,7 @@
                 var self = this;
 
                 self.authors = ko.observableArray([]);
+                self.authorsComplete = ko.observableArray([]);
                 self.quotes = ko.observableArray([]);
 
                 self.newAuthorFirstname = ko.observable();
@@ -174,21 +156,21 @@
                 
                 self.quoteToUpdate = ko.observable();
                 self.quoteUpdateCopy = ko.observable();
-//
-//                var QUOTE_HOST = "http://localhost:8080/quotes";
-//                var AUTHOR_HOST = "http://localhost:8080/authors";
-                
-                var QUOTE_HOST = "https://kw-quoteservice-api.herokuapp.com/quotes";
-                var AUTHOR_HOST = "https://kw-quoteservice-api.herokuapp.com/authors";
 
-                $.getJSON(AUTHOR_HOST + "?sort=desc", function(allData) {
+                var QUOTE_HOST = "http://localhost:8080/quotes";
+                var AUTHOR_HOST = "http://localhost:8080/authors";
+                
+//                var QUOTE_HOST = "https://kw-quoteservice-api.herokuapp.com/quotes";
+//                var AUTHOR_HOST = "https://kw-quoteservice-api.herokuapp.com/authors";
+
+                $.getJSON(AUTHOR_HOST, function(allData) {
                     var mappedAuthors = $.map(allData, function(authorData) { 
                         return new Author(authorData) 
                     });
                     self.authors(mappedAuthors);
                 });
 
-                $.getJSON(QUOTE_HOST + "?sort=desc", function(allData) {
+                $.getJSON(QUOTE_HOST, function(allData) {
                     var mappedQuotes = $.map(allData, function(quoteData) { 
                         return new Quote(quoteData) 
                     });
@@ -221,6 +203,15 @@
                         }
                     });
                 };
+                                
+                self.queryAuthorComplete = function(firstname) {
+                    $.ajax(AUTHOR_HOST + "?firstname=" + firstname, {
+                        type: "get", contentType: "application/json",
+                        success: function(data, textStatus, request) {
+                            self.authorsComplete(data)
+                        }
+                    });
+                };
 
                 self.saveQuote = function() {
                     var newQuote = { content: self.newQuoteContent(), author: self.newQuoteAuthor() };
@@ -248,8 +239,10 @@
                         data: ko.toJSON(self.quoteUpdateCopy),
                         type: "put", contentType: "application/json",
                         success: function(result) {
-                            self.quotes.remove(self.quoteToUpdate());
+                            console.log("COPY: " + ko.toJSON(self.quoteUpdateCopy()));
+                            console.log("ORG: " + ko.toJSON(self.quoteToUpdate()));
                             self.quotes.push(self.quoteUpdateCopy());
+                            self.quotes.remove(self.quoteToUpdate());
                             self.quoteToUpdate('');
                             self.quoteUpdateCopy('');
                         }
@@ -266,10 +259,39 @@
                         }
                     });
                 };
+
+                ko.bindingHandlers.awesomplete = {
+                    init: function(element) {
+                        var list = []
+                        var awesomplete = new Awesomplete(element, { 
+                            list: list,
+                            data: function (item, input) { return { label: item.firstname + " "+ item.lastname, value: item };},
+                            autoFirst: true
+                            });
+                        
+                    element.addEventListener("awesomplete-selectcomplete", function(e){
+                        self.newQuoteAuthor(e.text.value);
+                        e.target.value = e.text.label;
+                    }, false);
+                    element.addEventListener("keypress", function(e){
+                        self.queryAuthorComplete(element.value);
+                        awesomplete.list = JSON.parse(ko.toJSON(self.authorsComplete()))
+                    }, false);
+                        // This will be called when the binding is first applied to an element
+                        // Set up any initial state, event handlers, etc. here
+                    },
+                    update: function() {
+//                        console.log("update");
+                        // This will be called once when the binding is first applied to an element,
+                        // and again whenever any observables/computeds that are accessed change
+                        // Update the DOM element based on the supplied values here.
+                    }
+                };
+                
             }
-
-            ko.applyBindings(new QuoteserviceViewModel());
-
+            
+            var model = new QuoteserviceViewModel();
+            ko.applyBindings(model);
         </script>
     </body>
 </html>
