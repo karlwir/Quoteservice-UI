@@ -18,32 +18,23 @@
         <div class="container mb-5">
             <div class="row">
                 <div class="col-md-6">
-                    <h3>Create qoute</h3>
+                    <h3>Add qoute</h3>
                     <form>
                         <div class="form-group">
                             <label>Quote</label>
                             <input type="text" class="form-control" placeholder="Enter quote" data-bind="value: newQuoteContent">
                         </div>
-<!--
-                        <div class="form-group">
-                            <label>Author</label>
-                            <select class="form-control" data-bind="options: $root.authors, optionsCaption: 'Choose...', value: newQuoteAuthor, optionsText: 'fullname'"></select>
-                        </div>
--->
                         <div class="form-group">
                                 <label>Author</label>
-                                <input class="form-control" type="text" placeholder="Select author" data-bind="awesomplete: $root.authors">
+                                <input class="form-control" type="text" placeholder="Enter author" data-bind="awesompleteNewQuote: awesompleteNewQuote">
                         </div>
                         <div class="form-group">
-                            <button type="submit" class="btn btn-primary" data-bind="click: saveQuote">Save</button>
-                        </div>  
-                            <ul id="mylist" data-bind="foreach : authorsComplete">
-                                <li data-bind="text: firstname"></li>
-                            </ul>
+                            <button type="submit" class="btn btn-primary" data-bind="click: saveQuote">Add</button>
+                        </div>
                     </form>
                 </div>
                 <div class="col-md-6">
-                    <h3>Create author</h3>
+                    <h3>Add author</h3>
                     <form>
                         <div class="form-group">
                             <label>Firstname</label>
@@ -54,7 +45,7 @@
                             <input type="text" class="form-control" placeholder="Enter lastname"  data-bind="value: newAuthorLastname">
                         </div>
                         <div class="form-group">
-                            <button type="submit" class="btn btn-primary" data-bind="click: saveAuthor">Save</button>
+                            <button type="submit" class="btn btn-primary" data-bind="click: saveAuthor">Add</button>
                         </div>                    
                     </form>
                 </div>
@@ -67,7 +58,7 @@
                         <li class="list-group-item flex-column align-items-start">
                             <p data-bind="text: content"></p>
                             <div class="d-flex w-100 justify-content-between">
-                                <span class="text-sm" data-bind="text: author().fullname()"></span>
+                                <span class="text-sm" data-bind="text: author().fullname"></span>
                                 <div>
                                     <button type="button" class="btn btn-link btn-sm" data-bind="click: $root.deleteQuote">Remove</button>
                                     <button type="button" class="btn btn-link btn-sm" data-bind="click: $root.updateQuote">Edit</button>
@@ -82,7 +73,7 @@
                     <ul class="list-group" data-bind="foreach: authors, visible: authors().length > 0">
                         <li class="list-group-item flex-column align-items-start">
                             <div class="d-flex w-100 justify-content-between">
-                                <span data-bind="text: fullname()"></span>
+                                <span data-bind="text: fullname"></span>
                                 <div>
                                     <button type="button" class="btn btn-link btn-sm" data-bind="click: $root.deleteAuthor">Remove</button>
                                 </div>
@@ -108,7 +99,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Author</label>
-                                    <select class="form-control" data-bind="options: $root.authors, optionsText: 'fullname', value: quoteUpdateCopy().author"></select>
+                                    <input class="form-control" type="text" placeholder="Enter author" data-bind="value: quoteUpdateCopy().author().fullname, awesompleteUpdateQuote: awesompleteUpdateQuote">
                                 </div>
                                 <div class="form-group">
                                     <button type="submit" class="btn btn-primary" data-bind="click: updateQuote">Save</button>
@@ -120,7 +111,6 @@
                 </div>
             </div>
         </div>
-        
         <!-- /ko -->
         <script>
 
@@ -136,9 +126,7 @@
                 self.id = data.id;
                 self.firstname = ko.observable(data.firstname);
                 self.lastname = ko.observable(data.lastname);
-                self.fullname = ko.pureComputed(function() {
-                    return self.firstname() + " " + self.lastname();    
-                }, self);
+                self.fullname = ko.observable(data.fullname);
             }
 
             function QuoteserviceViewModel() {
@@ -203,15 +191,6 @@
                         }
                     });
                 };
-                                
-                self.queryAuthorComplete = function(firstname) {
-                    $.ajax(AUTHOR_HOST + "?firstname=" + firstname, {
-                        type: "get", contentType: "application/json",
-                        success: function(data, textStatus, request) {
-                            self.authorsComplete(data)
-                        }
-                    });
-                };
 
                 self.saveQuote = function() {
                     var newQuote = { content: self.newQuoteContent(), author: self.newQuoteAuthor() };
@@ -239,10 +218,7 @@
                         data: ko.toJSON(self.quoteUpdateCopy),
                         type: "put", contentType: "application/json",
                         success: function(result) {
-                            console.log("COPY: " + ko.toJSON(self.quoteUpdateCopy()));
-                            console.log("ORG: " + ko.toJSON(self.quoteToUpdate()));
-                            self.quotes.push(self.quoteUpdateCopy());
-                            self.quotes.remove(self.quoteToUpdate());
+                            self.quotes.replace(self.quoteToUpdate(), self.quoteUpdateCopy());
                             self.quoteToUpdate('');
                             self.quoteUpdateCopy('');
                         }
@@ -259,39 +235,63 @@
                         }
                     });
                 };
+                                                
+                self.queryAuthorComplete = function(namequery) {
+                    $.ajax(AUTHOR_HOST + "?namequery=" + namequery, {
+                        type: "get", contentType: "application/json",
+                        success: function(data, textStatus, request) {
+                            self.authorsComplete(data)
+                        }
+                    });
+                };
 
-                ko.bindingHandlers.awesomplete = {
-                    init: function(element) {
+                ko.bindingHandlers.awesompleteNewQuote = {
+                    update: function(element) {
                         var list = []
-                        var awesomplete = new Awesomplete(element, { 
+                        var awesomplete = new Awesomplete(
+                            element, { 
                             list: list,
-                            data: function (item, input) { return { label: item.firstname + " "+ item.lastname, value: item };},
+                            data: function (item, input) { return { label: item.firstname + " " + item.lastname, value: item }},
                             autoFirst: true
-                            });
+                        });
                         
-                    element.addEventListener("awesomplete-selectcomplete", function(e){
-                        self.newQuoteAuthor(e.text.value);
-                        e.target.value = e.text.label;
-                    }, false);
-                    element.addEventListener("keypress", function(e){
-                        self.queryAuthorComplete(element.value);
-                        awesomplete.list = JSON.parse(ko.toJSON(self.authorsComplete()))
-                    }, false);
-                        // This will be called when the binding is first applied to an element
-                        // Set up any initial state, event handlers, etc. here
-                    },
-                    update: function() {
-//                        console.log("update");
-                        // This will be called once when the binding is first applied to an element,
-                        // and again whenever any observables/computeds that are accessed change
-                        // Update the DOM element based on the supplied values here.
+                        ko.utils.registerEventHandler(element, "keypress", function(e){
+                            self.queryAuthorComplete(element.value);
+                            awesomplete.list = JSON.parse(ko.toJSON(self.authorsComplete()));
+                        }, false);  
+                        
+                        ko.utils.registerEventHandler(element, "awesomplete-selectcomplete", function(e){
+                            self.newQuoteAuthor(e.originalEvent.text.value);
+                            e.target.value = e.originalEvent.text.label;
+                        }, false);
+                    }
+                };
+                                
+                ko.bindingHandlers.awesompleteUpdateQuote = {
+                    update: function(element) {
+                        var list = []
+                        var awesomplete = new Awesomplete(
+                            element, { 
+                            list: list,
+                            data: function (item, input) { return { label: item.firstname + " " + item.lastname, value: item }},
+                            autoFirst: true
+                        });
+                        
+                        ko.utils.registerEventHandler(element, "keypress", function(e){
+                            self.queryAuthorComplete(element.value);
+                            awesomplete.list = JSON.parse(ko.toJSON(self.authorsComplete()));
+                        }, false);  
+                        
+                        ko.utils.registerEventHandler(element, "awesomplete-selectcomplete", function(e){
+                            self.quoteUpdateCopy().author(e.originalEvent.text.value);
+                            e.target.value = e.originalEvent.text.label;
+                        }, false);
                     }
                 };
                 
             }
             
-            var model = new QuoteserviceViewModel();
-            ko.applyBindings(model);
+            ko.applyBindings(new QuoteserviceViewModel());
         </script>
     </body>
 </html>

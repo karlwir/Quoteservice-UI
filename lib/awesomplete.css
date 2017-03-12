@@ -33,13 +33,17 @@
 }
 
 .awesomplete > ul {
-	border-radius: .3em;
+    border-radius: .25rem;
+    overflow: hidden;
 	margin: .2em 0 0;
-	background: hsla(0,0%,100%,.9);
-	background: linear-gradient(to bottom right, white, hsla(0,0%,100%,.8));
-	border: 1px solid rgba(0,0,0,.3);
+	background: #fff;
+	border: 1px solid rgba(0, 0, 0, 0.15);
 	box-shadow: .05em .2em .6em rgba(0,0,0,.2);
 	text-shadow: none;
+}
+
+.awesomplete > ul:before {
+    display: none;
 }
 
 @supports (transform: scale(0)) {
@@ -75,7 +79,7 @@
 
 	.awesomplete > ul > li {
 		position: relative;
-		padding: .2em .5em;
+        padding: .75rem 1.25rem;    
 		cursor: pointer;
 	}
 	
@@ -85,20 +89,17 @@
 	}
 	
 	.awesomplete > ul > li[aria-selected="true"] {
-		background: hsl(205, 40%, 40%);
+		background: #0275d8;
 		color: white;
 	}
 	
 		.awesomplete mark {
-			background: hsl(65, 100%, 50%);
-		}
-		
-		.awesomplete li:hover mark {
-			background: hsl(68, 100%, 41%);
+            background-color: transparent;
+            padding:0;
+			font-weight: bold;
 		}
 		
 		.awesomplete li[aria-selected="true"] mark {
-			background: hsl(86, 100%, 21%);
 			color: inherit;
 		}
 /*# sourceMappingURL=awesomplete.css.map */
