@@ -17,6 +17,14 @@
         </div>
         <div class="container mb-5">
             <div class="row">
+                <div class="col-md-12" data-bind="visible: errorMessage" style="display:none;">
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close" data-bind="click: function() { errorMessage('')}">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <strong>Oh snap!</strong> <span data-bind="text: errorMessage"></span>.
+                </div>
+                </div>
                 <div class="col-md-6">
                     <h3>Add qoute</h3>
                     <form>
@@ -26,7 +34,7 @@
                         </div>
                         <div class="form-group">
                                 <label>Author</label>
-                                <input class="form-control" type="text" placeholder="Enter author" data-bind="awesompleteNewQuote: awesompleteNewQuote">
+                                <input class="form-control" type="text" placeholder="Enter author" data-bind="awesompleteAuthor: {target: newQuoteAuthor}">
                         </div>
                         <div class="form-group">
                             <button type="submit" class="btn btn-primary" data-bind="click: saveQuote">Add</button>
@@ -99,7 +107,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Author</label>
-                                    <input class="form-control" type="text" placeholder="Enter author" data-bind="value: quoteUpdateCopy().author().fullname, awesompleteUpdateQuote: awesompleteUpdateQuote">
+                                    <input class="form-control" type="text" placeholder="Enter author" data-bind="value: quoteUpdateCopy().author().fullname, awesompleteAuthor: {target: quoteUpdateCopy().author}">
                                 </div>
                                 <div class="form-group">
                                     <button type="submit" class="btn btn-primary" data-bind="click: updateQuote">Save</button>
@@ -144,6 +152,8 @@
                 
                 self.quoteToUpdate = ko.observable();
                 self.quoteUpdateCopy = ko.observable();
+                
+                self.errorMessage = ko.observable();
 
                 var QUOTE_HOST = "http://localhost:8080/quotes";
                 var AUTHOR_HOST = "http://localhost:8080/authors";
@@ -178,6 +188,9 @@
                                 self.newAuthorFirstname("");
                                 self.newAuthorLastname("");
                             });
+                        },
+                        error: function() {
+                            self.errorMessage("Something went terribly wrong...")
                         }
                     });
                 }; 
@@ -188,6 +201,9 @@
                         type: "delete", contentType: "application/json",
                         success: function(result) {
                             self.authors.remove(author) 
+                        },
+                        error: function() {
+                            self.errorMessage("Something went terribly wrong...")
                         }
                     });
                 };
@@ -202,9 +218,12 @@
                             location = request.getResponseHeader("Location");
                             $.getJSON(location, function(quoteData) {
                                 self.quotes.push(new Quote(quoteData));
-                                self.newQuoteAuthor("");
-                                self.newQuoteContent("");
+                                self.newQuoteAuthor('');
+                                self.newQuoteContent('');
                             });
+                        },
+                        error: function() {
+                            self.errorMessage("Something went terribly wrong...")
                         }
                     });
                 };
@@ -221,6 +240,9 @@
                             self.quotes.replace(self.quoteToUpdate(), self.quoteUpdateCopy());
                             self.quoteToUpdate('');
                             self.quoteUpdateCopy('');
+                        },
+                        error: function() {
+                            self.errorMessage("Something went terribly wrong...")
                         }
                     });
                     }
@@ -232,6 +254,9 @@
                         type: "delete", contentType: "application/json",
                         success: function(result) {
                             self.quotes.remove(quote);
+                        },
+                        error: function() {
+                            self.errorMessage("Something went terribly wrong...")
                         }
                     });
                 };
@@ -245,8 +270,8 @@
                     });
                 };
 
-                ko.bindingHandlers.awesompleteNewQuote = {
-                    update: function(element) {
+                ko.bindingHandlers.awesompleteAuthor = {
+                    update: function(element, valueAccessor) {
                         var list = []
                         var awesomplete = new Awesomplete(
                             element, { 
@@ -261,29 +286,8 @@
                         }, false);  
                         
                         ko.utils.registerEventHandler(element, "awesomplete-selectcomplete", function(e){
-                            self.newQuoteAuthor(e.originalEvent.text.value);
-                            e.target.value = e.originalEvent.text.label;
-                        }, false);
-                    }
-                };
-                                
-                ko.bindingHandlers.awesompleteUpdateQuote = {
-                    update: function(element) {
-                        var list = []
-                        var awesomplete = new Awesomplete(
-                            element, { 
-                            list: list,
-                            data: function (item, input) { return { label: item.firstname + " " + item.lastname, value: item }},
-                            autoFirst: true
-                        });
-                        
-                        ko.utils.registerEventHandler(element, "keypress", function(e){
-                            self.queryAuthorComplete(element.value);
-                            awesomplete.list = JSON.parse(ko.toJSON(self.authorsComplete()));
-                        }, false);  
-                        
-                        ko.utils.registerEventHandler(element, "awesomplete-selectcomplete", function(e){
-                            self.quoteUpdateCopy().author(e.originalEvent.text.value);
+                            valueAccessor().target(e.originalEvent.text.value);
+//                            self.newQuoteAuthor(e.originalEvent.text.value);
                             e.target.value = e.originalEvent.text.label;
                         }, false);
                     }

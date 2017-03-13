@@ -84,7 +84,7 @@
 	}
 	
 	.awesomplete > ul > li:hover {
-		background: hsl(200, 40%, 80%);
+		background: #f7f7f9;
 		color: black;
 	}
 	
